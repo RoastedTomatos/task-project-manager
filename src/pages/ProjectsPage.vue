@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useProjectsStore } from '@/store/projects'
+import { useProjectsStore } from '@/stores/projects'
 import { useRouter } from 'vue-router'
 
 const store = useProjectsStore()
