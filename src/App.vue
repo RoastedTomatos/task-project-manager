@@ -1,11 +1,14 @@
-<script setup lang="ts"></script>
-
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <header>
+    <h1>Project Manager</h1>
+  </header>
+  <section>
+    <ProjectsManager />
+  </section>
 </template>
 
-<style scoped></style>
+<script setup lang="ts">
+import ProjectsManager from './components/ProjectsManager.vue'
+</script>
+
+<style scoped lang="scss"></style>
