@@ -88,32 +88,111 @@ const loading = computed(() => store.loading)
 <style scoped lang="scss">
 .projects-page {
   padding: 1rem;
+
   h1 {
     margin-bottom: 1rem;
   }
-  .projects-table {
-    width: 100%;
-    border-collapse: collapse;
-    th,
-    td {
-      text-align: center;
-      padding: 0.5rem;
-      border-bottom: 1px solid #ccc;
-    }
-    thead th:hover {
-      background: #f7f7f7;
-      cursor: pointer;
-    }
-    tbody tr:hover {
-      background: #f7f7f7;
-      cursor: pointer;
-    }
-  }
+
   .actions {
     display: flex;
     width: 100%;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+    padding: 10px 0;
+    gap: 1rem;
+  }
+
+  input {
+    width: fit-content;
+    max-width: 300px;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition:
+      border-color 0.3s,
+      box-shadow 0.3s;
+
+    &:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      outline: none;
+    }
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 0.3s,
+      transform 0.1s,
+      box-shadow 0.3s;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    &:nth-last-child(1) {
+      background-color: #007bff;
+      color: white;
+
+      &:hover {
+        background-color: #0056b3;
+      }
+    }
+
+    &:nth-child(1) {
+      background-color: #e9ecef;
+      color: #343a40;
+      border: 1px solid #dee2e6;
+
+      &:hover {
+        background-color: #d8dade;
+      }
+    }
+  }
+
+  .projects-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+
+    thead th:hover {
+      background: #f7f7f7;
+      cursor: pointer;
+    }
+
+    tbody tr {
+      transition: background 0.2s;
+      cursor: pointer;
+
+      &.dragging {
+        opacity: 0.5;
+      }
+
+      &:hover {
+        background: #f4f6fc;
+      }
+    }
   }
 }
 </style>

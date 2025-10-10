@@ -1,0 +1,59 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "title": "Landing Page",
+      "taskCount": 12,
+      "status": "active",
+      "createdAt": "2025-10-01"
+    },
+    {
+      "id": 2,
+      "title": "Mobile App",
+      "taskCount": 8,
+      "status": "paused",
+      "createdAt": "2025-09-20"
+    },
+    {
+      "id": 3,
+      "title": "CRM System",
+      "taskCount": 20,
+      "status": "completed",
+      "createdAt": "2025-08-10"
+    }
+  ],
+  "tasks": [
+    {
+      "id": 1,
+      "projectId": 1,
+      "title": "Design hero section",
+      "assignee": "Alice",
+      "status": "todo",
+      "dueDate": "2025-10-12"
+    },
+    {
+      "id": 2,
+      "projectId": 1,
+      "title": "Implement slider",
+      "assignee": "Bob",
+      "status": "in-progress",
+      "dueDate": "2025-10-15"
+    },
+    {
+      "id": 3,
+      "projectId": 1,
+      "title": "Setup analytics",
+      "assignee": "Charlie",
+      "status": "done",
+      "dueDate": "2025-10-05"
+    },
+    {
+      "id": 4,
+      "projectId": 2,
+      "title": "Login screen",
+      "assignee": "Alice",
+      "status": "todo",
+      "dueDate": "2025-10-20"
+    }
+  ]
+}
