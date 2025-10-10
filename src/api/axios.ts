@@ -1,4 +1,3 @@
-// src/api/axios.ts
 type Project = {
   id: number
   title: string
@@ -33,9 +32,11 @@ const fakeDB: Project[] = [
 
 const axios = {
   async get<T = any>(url: string): Promise<{ data: T }> {
+    console.log(`[API MOCK] GET request to ${url}`)
     await new Promise((r) => setTimeout(r, 500))
 
     if (url === '/projects') {
+      console.log('[API MOCK] Returning fakeDB:', fakeDB)
       return { data: fakeDB as unknown as T }
     }
 

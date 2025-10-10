@@ -10,10 +10,17 @@ export const useProjectsStore = defineStore('projects', {
 
   actions: {
     async fetchProjects() {
-      this.loading = true
-      const { data } = await api.get<Project[]>('/projects')
-      this.projects = data
-      this.loading = false
+      try {
+        this.loading = true
+        const { data } = await api.get<Project[]>('/projects')
+        console.log('[STORE] Data received from API:', data)
+        this.projects = data
+        console.log('[STORE] State updated. New projects:', this.projects)
+      } catch (error) {
+        console.error('[STORE] Failed to fetch projects:', error)
+      } finally {
+        this.loading = false
+      }
     },
 
     async addProject(project: Omit<Project, 'id' | 'createdAt' | 'taskCount'>) {
