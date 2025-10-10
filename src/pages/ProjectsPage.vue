@@ -3,8 +3,8 @@
     <h1>Projects</h1>
 
     <div class="actions">
-      <input v-model="filter" placeholder="Search by name..." />
       <button @click="fetchProjects">Reload</button>
+      <input v-model="filter" placeholder="Search by name..." />
       <button @click="openAddModal">Add Project</button>
     </div>
 
@@ -20,20 +20,27 @@
           <th>Created</th>
         </tr>
       </thead>
-      <tbody ref="tableBody">
-        <tr
-          v-for="p in draggableProjects"
-          :key="p.id"
-          v-show="(p.title || '').toLowerCase().includes(filter.toLowerCase())"
-          @click="goToProject(p.id)"
-        >
-          <td>{{ p.id }}</td>
-          <td>{{ p.title }}</td>
-          <td>{{ p.taskCount }}</td>
-          <td>{{ p.status }}</td>
-          <td>{{ new Date(p.createdAt).toLocaleDateString() }}</td>
-        </tr>
-      </tbody>
+
+      <draggable
+        v-model="draggableProjects"
+        tag="tbody"
+        item-key="id"
+        @start="dragging = true"
+        @end="dragging = false"
+      >
+        <template #item="{ element: p }">
+          <tr
+            v-show="(p.title || '').toLowerCase().includes(filter.toLowerCase())"
+            @click="goToProject(p.id)"
+          >
+            <td>{{ p.id }}</td>
+            <td>{{ p.title }}</td>
+            <td>{{ p.taskCount }}</td>
+            <td>{{ p.status }}</td>
+            <td>{{ new Date(p.createdAt).toLocaleDateString() }}</td>
+          </tr>
+        </template>
+      </draggable>
     </table>
   </section>
 </template>
@@ -42,7 +49,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouter } from 'vue-router'
-import { useDraggable } from 'vue-draggable-plus'
+import draggable from 'vuedraggable'
 import type { Project } from '@/types/Project'
 
 const store = useProjectsStore()
@@ -50,9 +57,7 @@ const router = useRouter()
 
 const filter = ref('')
 const draggableProjects = ref<Project[]>([])
-const tableBody = ref<HTMLElement | null>(null)
-
-const loading = computed(() => store.loading)
+const dragging = ref(false)
 
 watch(
   () => store.projects,
@@ -75,20 +80,9 @@ function openAddModal() {
   alert('TODO: Add modal')
 }
 
-onMounted(() => {
-  fetchProjects()
-  if (tableBody.value) {
-    useDraggable(tableBody, draggableProjects, {
-      animation: 150,
-      onUpdate() {
-        console.log(
-          'New order:',
-          draggableProjects.value.map((p) => p.title),
-        )
-      },
-    })
-  }
-})
+onMounted(fetchProjects)
+
+const loading = computed(() => store.loading)
 </script>
 
 <style scoped lang="scss">
