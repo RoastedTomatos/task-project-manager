@@ -75,13 +75,23 @@ onMounted(fetchProjects)
     border-collapse: collapse;
     th,
     td {
+      text-align: center;
       padding: 0.5rem;
       border-bottom: 1px solid #ccc;
     }
-    tr:hover {
+    thead th:hover {
       background: #f7f7f7;
       cursor: pointer;
     }
+    tbody tr:hover {
+      background: #f7f7f7;
+      cursor: pointer;
+    }
+  }
+  .actions {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>

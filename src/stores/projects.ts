@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import api from '@/api/axios'
-import type { Project } from '@/types/project'
+import type { Project } from '@/types/Project'
 
 export const useProjectsStore = defineStore('projects', {
   state: () => ({
