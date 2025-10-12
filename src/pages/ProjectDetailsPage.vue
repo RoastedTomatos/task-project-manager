@@ -1,15 +1,22 @@
 <template>
   <section class="tasks-page">
-    <h1>{{ projectData.title || projectTitle }}</h1>
+    <div class="task-header">
+      <button @click="goBack">
+        <img src="@/assets/back-icon.svg" alt="back-icon" />
+      </button>
+      <h1>{{ projectData.title || projectTitle }}</h1>
+    </div>
 
     <div v-if="projectData.description" class="project-description-container">
       <p class="project-description">{{ projectData.description }}</p>
     </div>
 
     <div class="actions">
-      <button @click="fetchTasks">Reload</button>
+      <button @click="fetchTasks">
+        <img src="@/assets/refresh-icon.svg" alt="refresh" />
+      </button>
       <input v-model="filter" placeholder="Search by title or assignee..." />
-      <button class="btn-primary" @click="openAddTaskModal">Add Task</button>
+      <button @click="openAddTaskModal">Add Task</button>
     </div>
 
     <div v-if="tasksStore.loading || projectLoading">Loading tasks...</div>
@@ -54,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useTasksStore } from '@/stores/tasks'
 import { useProjectsStore } from '@/stores/projects'
 import draggable from 'vuedraggable'
@@ -66,6 +73,7 @@ import AddTaskModal from '@/components/TasksModal.vue'
 const tasksStore = useTasksStore()
 const projectsStore = useProjectsStore()
 const route = useRoute()
+const router = useRouter()
 
 const projectId = Number(route.params.id)
 const projectTitle = ref(`Project ${projectId}`)
@@ -197,6 +205,10 @@ function handleTaskCreated() {
   fetchTasks()
 }
 
+function goBack() {
+  router.push('/')
+}
+
 function editTask(id: number) {
   console.log('TODO: Open edit modal for task:', id)
 }
@@ -211,17 +223,33 @@ onMounted(() => {
 .tasks-page {
   padding: 1rem;
 
-  h1 {
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 1rem;
+  .task-header {
+    display: flex !important;
+    flex-direction: row;
+    gap: 40px;
+    align-items: center;
+
+    button {
+      display: flex;
+      background-color: #fff;
+      border: none;
+      cursor: pointer;
+      align-self: center;
+      img {
+        width: 40px !important;
+        height: 40px !important;
+      }
+    }
+
+    h1 {
+      display: flex;
+      margin-bottom: 1rem;
+    }
   }
 
   .project-description-container {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto 1.5rem auto;
+    max-width: 100%;
+    margin: 20px 0;
     padding: 15px;
     background-color: #eef4f9;
     border-radius: 8px;
@@ -239,47 +267,73 @@ onMounted(() => {
 
   .actions {
     display: flex;
+    width: 100%;
     justify-content: space-between;
-    align-items: center;
     margin-bottom: 1.5rem;
+    align-items: center;
     padding: 10px 0;
-  }
+    gap: 1rem;
 
-  input {
-    max-width: fit-content;
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition:
-      border-color 0.3s,
-      box-shadow 0.3s;
+    input {
+      width: fit-content;
+      height: -webkit-fill-available;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition:
+        border-color 0.3s,
+        box-shadow 0.3s;
 
-    &:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-      outline: none;
+      &:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        outline: none;
+      }
     }
-  }
-  button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition:
-      background-color 0.3s,
-      transform 0.1s,
-      box-shadow 0.3s;
-    white-space: nowrap;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
 
-  .btn-primary {
-    background-color: #007bff;
-    color: white;
-    &:hover {
-      background-color: #0056b3;
+    button {
+      padding: 10px 20px;
+      height: -webkit-fill-available;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition:
+        background-color 0.3s,
+        transform 0.1s,
+        box-shadow 0.3s;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: none;
+      }
+
+      &:nth-last-child(1) {
+        background-color: #007bff;
+        color: white;
+
+        &:hover {
+          background-color: #0056b3;
+        }
+      }
+
+      &:nth-child(1) {
+        background-color: #e9ecef;
+        color: #343a40;
+        border: 1px solid #dee2e6;
+
+        &:hover {
+          background-color: #d8dade;
+        }
+      }
     }
   }
 

@@ -3,7 +3,9 @@
     <h1>Projects Table</h1>
 
     <div class="actions">
-      <button @click="fetchProjects">Reload</button>
+      <button @click="fetchProjects">
+        <img src="@/assets/refresh-icon.svg" alt="refresh" />
+      </button>
       <input v-model="filter" placeholder="Search by name..." @input="onFilterTextBoxChanged" />
       <button @click="openAddModal">Add Project</button>
     </div>
@@ -102,8 +104,6 @@ const loading = computed(() => store.loading)
 
   h1 {
     display: flex;
-    width: 100%;
-    justify-content: center;
   }
 
   .actions {
@@ -118,7 +118,7 @@ const loading = computed(() => store.loading)
 
   input {
     width: fit-content;
-    max-width: 300px;
+    height: -webkit-fill-available;
     padding: 10px 15px;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -136,6 +136,7 @@ const loading = computed(() => store.loading)
 
   button {
     padding: 10px 20px;
+    height: -webkit-fill-available;
     border: none;
     border-radius: 8px;
     font-weight: 600;
