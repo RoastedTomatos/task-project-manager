@@ -69,7 +69,6 @@ import type { Task } from '@/types/Task'
 import type { Project } from '@/types/Project'
 import TaskCard from '@/components/TaskCard.vue'
 import AddTaskModal from '@/components/TasksModal.vue'
-import { toast, type ToastOptions } from 'vue3-toastify'
 
 const tasksStore = useTasksStore()
 const projectsStore = useProjectsStore()
@@ -141,7 +140,6 @@ async function fetchProject() {
   projectLoading.value = true
   try {
     const project = await projectsStore.fetchProjectById(projectId)
-    console.log(project)
 
     if (project) {
       projectData.value = project
@@ -184,23 +182,9 @@ async function onDragEnd(event: any) {
   const taskId = taskToUpdate.id
 
   if (fromStatus !== toStatus) {
+    console.log(`Task ${taskId} moved from ${fromStatus} to ${toStatus}. Updating status...`)
     await tasksStore.updateTask(taskId, { status: toStatus })
-
-    toast(`Task "${taskToUpdate.title}" moved to ${statusLabels[toStatus]}`, {
-      autoClose: 1000,
-      position: toast.POSITION.BOTTOM_RIGHT,
-    } as ToastOptions)
   }
-
-  const newOrder = targetColumn.tasks.map((task, index) => ({
-    id: task.id,
-    orderIndex: index,
-  }))
-
-  console.log(
-    `Order changed in ${toStatus}. New order:`,
-    newOrder.map((o) => o.id),
-  )
 }
 
 function openAddTaskModal() {
@@ -210,10 +194,6 @@ function openAddTaskModal() {
 function handleTaskCreated() {
   isAddTaskModalOpen.value = false
   fetchTasks()
-  toast('New task created successfully!', {
-    autoClose: 1000,
-    position: toast.POSITION.BOTTOM_RIGHT,
-  } as ToastOptions)
 }
 
 function goBack() {
