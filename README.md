@@ -26,14 +26,14 @@ You need **Node.js** (which includes npm/npx) installed on your system.
 
 ### **1\. Clone the repository**
 
-git clone \<repository-url\>  
-cd \<project-directory\>
+`git clone \<repository-url\>`  
+`cd \<project-directory\>`
 
 ### **2\. Install Dependencies**
 
 Install all necessary node modules for the front-end application and the mock server:
 
-npm install
+`npm install`
 
 ### **3\. Start the Development Environment**
 
@@ -41,11 +41,11 @@ For local development with hot reloading, you must run the API and the dev serve
 
 **Terminal 1 (Mock API Server):**
 
-npm run serve:api
+`npm run serve:api`
 
 **Terminal 2 (Frontend Dev Server):**
 
-npm run dev
+`npm run dev`
 
 The development application is typically accessible at http://localhost:5173/.
 
@@ -55,12 +55,12 @@ To test the final compiled build, use the combined preview command. This require
 
 **Step A: Build the project**
 
-npm run build
+`npm run build`
 
 **Step B: Run the Combined Preview**  
 This command simultaneously starts the Mock API server (serve:api) and serves the production build (serve:app), making it ready for final testing.
 
-npm run preview
+`npm run preview`
 
 ## **📝 Developer Notes & Design Decisions**
 
