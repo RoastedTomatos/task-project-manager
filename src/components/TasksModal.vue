@@ -2,32 +2,38 @@
   <Transition name="modal-fade">
     <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
       <div class="modal-container">
-        <h2 class="modal-title">Create New Project</h2>
-        <form @submit.prevent="saveProject">
+        <h2 class="modal-title">Create New Task</h2>
+        <form @submit.prevent="saveTask">
           <div class="form-group">
-            <label for="project-title">Project Title</label>
-            <input id="project-title" v-model="newProjectTitle" type="text" required />
+            <label for="task-title">Task Title</label>
+            <input id="task-title" v-model="newTaskTitle" type="text" required />
           </div>
 
           <div class="form-group">
-            <label for="project-description">Project Description (Optional)</label>
-            <textarea id="project-description" v-model="newProjectDescription" rows="4"></textarea>
+            <label for="task-description">Description (Optional)</label>
+            <textarea id="task-description" v-model="newTaskDescription" rows="3"></textarea>
           </div>
+
+          <div class="form-group">
+            <label for="task-assignee">Assignee</label>
+            <input id="task-assignee" v-model="newTaskAssignee" type="text" />
+          </div>
+
           <div class="modal-actions">
             <button
               type="button"
               class="btn btn-secondary"
               @click="$emit('close')"
-              :disabled="store.loading"
+              :disabled="tasksStore.loading"
             >
               Cancel
             </button>
             <button
               type="submit"
               class="btn btn-primary"
-              :disabled="!newProjectTitle.trim() || store.loading"
+              :disabled="!newTaskTitle.trim() || tasksStore.loading"
             >
-              {{ store.loading ? 'Creating...' : 'Create Project' }}
+              {{ tasksStore.loading ? 'Creating...' : 'Create Task' }}
             </button>
           </div>
         </form>
@@ -38,47 +44,55 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useProjectsStore } from '@/stores/projects'
-import type { Project } from '@/types/Project'
+import { useTasksStore } from '@/stores/tasks'
+import type { Task } from '@/types/Task'
 
 const props = defineProps<{
   isOpen: boolean
+  projectId: number
 }>()
 
-const emit = defineEmits(['close', 'project-created'])
+const emit = defineEmits(['close', 'task-created'])
 
-const store = useProjectsStore()
-const newProjectTitle = ref('')
-const newProjectDescription = ref('')
+const tasksStore = useTasksStore()
+const newTaskTitle = ref('')
+const newTaskDescription = ref('')
+const newTaskAssignee = ref('')
 
 watch(
   () => props.isOpen,
   (newVal) => {
     if (newVal) {
-      newProjectTitle.value = ''
-      newProjectDescription.value = ''
+      newTaskTitle.value = ''
+      newTaskDescription.value = ''
+      newTaskAssignee.value = ''
     }
   },
 )
 
-const saveProject = async () => {
-  if (!newProjectTitle.value.trim()) return
+const saveTask = async () => {
+  if (!newTaskTitle.value.trim()) return
 
-  const projectData: Partial<Project> = {
-    title: newProjectTitle.value.trim(),
-    description: newProjectDescription.value.trim(),
-    taskCount: 0,
-    status: 'active',
-    createdAt: new Date().toISOString(),
-  }
+  const futureDate = new Date()
+  futureDate.setDate(futureDate.getDate() + 7)
+  const calculatedDueDate = futureDate.toISOString()
+
+  const taskData: Omit<Task, 'id'> = {
+    projectId: props.projectId,
+    title: newTaskTitle.value.trim(),
+    description: newTaskDescription.value.trim(),
+    assignee: newTaskAssignee.value.trim() || 'Unassigned',
+    status: 'todo',
+    dueDate: calculatedDueDate,
+  } as Omit<Task, 'id'>
 
   try {
-    await store.addProject(projectData as Project)
+    await tasksStore.addTask(taskData)
 
-    emit('project-created')
+    emit('task-created')
     emit('close')
   } catch (error) {
-    console.error('Failed to create project:', error)
+    console.error('Failed to create task:', error)
   }
 }
 </script>
@@ -135,7 +149,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   padding: 12px;
   border: 1px solid #ccc;
@@ -145,6 +160,7 @@ textarea {
     border-color 0.2s,
     box-shadow 0.2s;
   resize: vertical;
+  background-color: white;
 
   &:focus {
     border-color: #007bff;

@@ -1,14 +1,18 @@
 <template>
   <section class="tasks-page">
-    <h1>{{ projectTitle }}</h1>
+    <h1>{{ projectData.title || projectTitle }}</h1>
+
+    <div v-if="projectData.description" class="project-description-container">
+      <p class="project-description">{{ projectData.description }}</p>
+    </div>
 
     <div class="actions">
       <button @click="fetchTasks">Reload</button>
       <input v-model="filter" placeholder="Search by title or assignee..." />
-      <button @click="openAddTaskModal">Add Task</button>
+      <button class="btn-primary" @click="openAddTaskModal">Add Task</button>
     </div>
 
-    <div v-if="tasksStore.loading">Loading tasks...</div>
+    <div v-if="tasksStore.loading || projectLoading">Loading tasks...</div>
 
     <div v-else class="kanban-board-container">
       <div v-for="column in filteredColumns" :key="column.status" class="kanban-column">
@@ -39,23 +43,38 @@
       </div>
     </div>
   </section>
+
+  <AddTaskModal
+    :is-open="isAddTaskModalOpen"
+    :project-id="projectId"
+    @close="isAddTaskModalOpen = false"
+    @task-created="handleTaskCreated"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTasksStore } from '@/stores/tasks'
+import { useProjectsStore } from '@/stores/projects'
 import draggable from 'vuedraggable'
 import type { Task } from '@/types/Task'
+import type { Project } from '@/types/Project'
 import TaskCard from '@/components/TaskCard.vue'
+import AddTaskModal from '@/components/TasksModal.vue'
 
 const tasksStore = useTasksStore()
+const projectsStore = useProjectsStore()
 const route = useRoute()
 
 const projectId = Number(route.params.id)
 const projectTitle = ref(`Project ${projectId}`)
 const filter = ref('')
 const dragging = ref(false)
+
+const projectData = ref<Partial<Project>>({})
+const projectLoading = ref(true)
+const isAddTaskModalOpen = ref(false)
 
 interface KanbanColumn {
   status: 'todo' | 'in-progress' | 'done'
@@ -109,6 +128,22 @@ watch(
   { immediate: true },
 )
 
+async function fetchProject() {
+  projectLoading.value = true
+  try {
+    const project = await projectsStore.fetchProjectById(projectId)
+    console.log(project)
+
+    if (project) {
+      projectData.value = project
+    }
+  } catch (error) {
+    console.error('Failed to fetch project details:', error)
+  } finally {
+    projectLoading.value = false
+  }
+}
+
 async function fetchTasks() {
   await tasksStore.fetchTasks(projectId)
 }
@@ -154,23 +189,52 @@ async function onDragEnd(event: any) {
 }
 
 function openAddTaskModal() {
-  alert('TODO: Add task modal for project ' + projectId)
+  isAddTaskModalOpen.value = true
+}
+
+function handleTaskCreated() {
+  isAddTaskModalOpen.value = false
+  fetchTasks()
 }
 
 function editTask(id: number) {
   console.log('TODO: Open edit modal for task:', id)
 }
 
-onMounted(fetchTasks)
+onMounted(() => {
+  fetchProject()
+  fetchTasks()
+})
 </script>
 
 <style scoped lang="scss">
 .tasks-page {
   padding: 1rem;
+
   h1 {
     display: flex;
     width: 100%;
     justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .project-description-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto 1.5rem auto;
+    padding: 15px;
+    background-color: #eef4f9;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .project-description {
+    font-size: 1rem;
+    color: #444;
+    line-height: 1.5;
+    text-align: center;
+    margin: 0;
   }
 
   .actions {
@@ -209,6 +273,14 @@ onMounted(fetchTasks)
       box-shadow 0.3s;
     white-space: nowrap;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    color: white;
+    &:hover {
+      background-color: #0056b3;
+    }
   }
 
   .kanban-board-container {
