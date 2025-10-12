@@ -1,75 +1,86 @@
 <template>
   <section class="projects-page">
-    <h1>Projects</h1>
+    <h1>Projects Table</h1>
 
     <div class="actions">
       <button @click="fetchProjects">Reload</button>
-      <input v-model="filter" placeholder="Search by name..." />
+      <input v-model="filter" placeholder="Search by name..." @input="onFilterTextBoxChanged" />
       <button @click="openAddModal">Add Project</button>
     </div>
 
     <div v-if="loading">Loading...</div>
 
-    <table v-else class="projects-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Tasks</th>
-          <th>Status</th>
-          <th>Created</th>
-        </tr>
-      </thead>
-
-      <draggable
-        v-model="draggableProjects"
-        tag="tbody"
-        item-key="id"
-        @start="dragging = true"
-        @end="dragging = false"
-      >
-        <template #item="{ element: p }">
-          <tr
-            v-show="(p.title || '').toLowerCase().includes(filter.toLowerCase())"
-            @click="goToProject(p.id)"
-          >
-            <td>{{ p.id }}</td>
-            <td>{{ p.title }}</td>
-            <td>{{ p.taskCount }}</td>
-            <td>{{ p.status }}</td>
-            <td>{{ new Date(p.createdAt).toLocaleDateString() }}</td>
-          </tr>
-        </template>
-      </draggable>
-    </table>
+    <div v-else class="ag-grid-container">
+      <ag-grid-vue
+        class="ag-theme-quartz"
+        :rowData="store.projects"
+        :columnDefs="columnDefs"
+        :defaultColDef="defaultColDef"
+        :animateRows="true"
+        @grid-ready="onGridReady"
+        @row-clicked="onRowClicked"
+      />
+    </div>
   </section>
+
+  <AddProjectModal
+    :is-open="isModalOpen"
+    @close="isModalOpen = false"
+    @project-created="fetchProjects"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouter } from 'vue-router'
-import draggable from 'vuedraggable'
-import type { Project } from '@/types/Project'
+import AddProjectModal from '@/components/ProjectsModal.vue'
+import { AgGridVue } from 'ag-grid-vue3'
+import 'ag-grid-community/styles/ag-theme-quartz.css'
 
 const store = useProjectsStore()
 const router = useRouter()
 
 const filter = ref('')
-const draggableProjects = ref<Project[]>([])
-const dragging = ref(false)
+const isModalOpen = ref(false)
+const gridApi = ref<any>(null)
 
-watch(
-  () => store.projects,
-  (newProjects) => {
-    draggableProjects.value = [...newProjects]
+const columnDefs = ref([
+  { field: 'id', headerName: 'ID', width: 70 },
+  { field: 'title', headerName: 'Title', flex: 2, minWidth: 200 },
+  { field: 'taskCount', headerName: 'Tasks', width: 100 },
+  { field: 'status', headerName: 'Status', width: 120 },
+  {
+    field: 'createdAt',
+    headerName: 'Created',
+    width: 120,
+    valueFormatter: (p: any) => new Date(p.value).toLocaleDateString(),
   },
-  { immediate: true },
-)
+])
+
+const defaultColDef = {
+  resizable: true,
+  sortable: true,
+  filter: true,
+  minWidth: 100,
+}
+
+function onGridReady(params: any) {
+  gridApi.value = params.api
+}
+
+function onRowClicked(event: any) {
+  goToProject(event.data.id)
+}
+
+function onFilterTextBoxChanged() {
+  if (gridApi.value) {
+    gridApi.value.setGridOption('quickFilterText', filter.value)
+  }
+}
 
 async function fetchProjects() {
   await store.fetchProjects()
-  draggableProjects.value = [...store.projects]
 }
 
 function goToProject(id: number) {
@@ -77,7 +88,7 @@ function goToProject(id: number) {
 }
 
 function openAddModal() {
-  alert('TODO: Add modal')
+  isModalOpen.value = true
 }
 
 onMounted(fetchProjects)
@@ -90,7 +101,9 @@ const loading = computed(() => store.loading)
   padding: 1rem;
 
   h1 {
-    margin-bottom: 1rem;
+    display: flex;
+    width: 100%;
+    justify-content: center;
   }
 
   .actions {
@@ -164,35 +177,13 @@ const loading = computed(() => store.loading)
     }
   }
 
-  .projects-table {
+  .ag-grid-container {
+    height: 500px;
     width: 100%;
-    border-collapse: collapse;
+  }
 
-    th,
-    td {
-      text-align: center;
-      padding: 0.75rem 0.5rem;
-      border-bottom: 1px solid #eee;
-      vertical-align: middle;
-    }
-
-    thead th:hover {
-      background: #f7f7f7;
-      cursor: pointer;
-    }
-
-    tbody tr {
-      transition: background 0.2s;
-      cursor: pointer;
-
-      &.dragging {
-        opacity: 0.5;
-      }
-
-      &:hover {
-        background: #f4f6fc;
-      }
-    }
+  .ag-theme-quartz {
+    height: 100%;
   }
 }
 </style>

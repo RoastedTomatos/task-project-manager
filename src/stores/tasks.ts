@@ -20,16 +20,16 @@ export const useTasksStore = defineStore('tasks', {
         this.loading = false
       }
     },
+
     async addTask(task: Omit<Task, 'id'>) {
       const res = await api.post<Task>('/tasks', task)
       this.tasks.push(res.data)
     },
+
     async updateTask(id: number, payload: Partial<Task>) {
       const res = await api.patch<Task>(`/tasks/${id}`, payload)
-      const index = this.tasks.findIndex((t) => t.id === id)
-      if (index !== -1) {
-        this.tasks[index] = res.data
-      }
+      const updatedTask = res.data
+      this.tasks = this.tasks.map((task) => (task.id === id ? updatedTask : task))
     },
   },
 })

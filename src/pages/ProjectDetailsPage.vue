@@ -1,59 +1,53 @@
 <template>
   <section class="tasks-page">
-    <h1>Tasks for Project: {{ projectTitle }}</h1>
+    <h1>{{ projectTitle }}</h1>
 
     <div class="actions">
-      <button @click="fetchTasks">Reload Tasks</button>
+      <button @click="fetchTasks">Reload</button>
       <input v-model="filter" placeholder="Search by title or assignee..." />
       <button @click="openAddTaskModal">Add Task</button>
     </div>
 
     <div v-if="tasksStore.loading">Loading tasks...</div>
 
-    <table v-else class="tasks-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Assignee</th>
-          <th>Due Date</th>
-          <th>Status</th>
-        </tr>
-      </thead>
+    <div v-else class="kanban-board-container">
+      <div v-for="column in filteredColumns" :key="column.status" class="kanban-column">
+        <div class="column-header">
+          <h2>{{ column.title }}</h2>
+          <span class="task-count">{{ column.tasks.length }}</span>
+        </div>
 
-      <draggable
-        v-model="draggableTasks"
-        tag="tbody"
-        item-key="id"
-        @start="dragging = true"
-        @end="onDragEnd"
-      >
-        <template #item="{ element: task }">
-          <tr
-            v-show="isTaskVisible(task)"
-            :class="{ dragging: dragging }"
-            @click="editTask(task.id)"
-          >
-            <td>{{ task.id }}</td>
-            <td>{{ task.title }}</td>
-            <td>{{ task.assignee }}</td>
-            <td>{{ new Date(task.dueDate).toLocaleDateString() }}</td>
-            <td>
-              <span :class="['status', task.status]">{{ statusLabels[task.status] }}</span>
-            </td>
-          </tr>
-        </template>
-      </draggable>
-    </table>
+        <draggable
+          v-model="column.tasks"
+          :animation="200"
+          group="kanban-tasks"
+          item-key="id"
+          class="kanban-tasks-list"
+          @start="dragging = true"
+          @end="onDragEnd"
+          :data-status="column.status"
+        >
+          <template #item="{ element: task }">
+            <TaskCard
+              :task="task"
+              :class="task.status"
+              class="task-item"
+              @edit="editTask(task.id)"
+            />
+          </template>
+        </draggable>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTasksStore } from '@/stores/tasks'
 import draggable from 'vuedraggable'
 import type { Task } from '@/types/Task'
+import TaskCard from '@/components/TaskCard.vue'
 
 const tasksStore = useTasksStore()
 const route = useRoute()
@@ -63,7 +57,11 @@ const projectTitle = ref(`Project ${projectId}`)
 const filter = ref('')
 const dragging = ref(false)
 
-const draggableTasks = ref<Task[]>([])
+interface KanbanColumn {
+  status: 'todo' | 'in-progress' | 'done'
+  title: string
+  tasks: Task[]
+}
 
 const statusLabels = {
   todo: 'To Do',
@@ -71,10 +69,42 @@ const statusLabels = {
   done: 'Done',
 } as const
 
+const columns = ref<KanbanColumn[]>([
+  { status: 'todo', title: statusLabels.todo, tasks: [] },
+  { status: 'in-progress', title: statusLabels['in-progress'], tasks: [] },
+  { status: 'done', title: statusLabels.done, tasks: [] },
+])
+
+const formatTasksToColumns = (tasks: Task[]) => {
+  columns.value.forEach((col) => (col.tasks = []))
+
+  tasks.forEach((task) => {
+    const column = columns.value.find((c) => c.status === task.status)
+    if (column) {
+      column.tasks.push(task)
+    }
+  })
+}
+
+const filteredColumns = computed(() => {
+  const f = filter.value.toLowerCase()
+
+  if (!f) return columns.value
+
+  return columns.value.map((column) => ({
+    ...column,
+    tasks: column.tasks.filter(
+      (task) =>
+        (task.title || '').toLowerCase().includes(f) ||
+        (task.assignee || '').toLowerCase().includes(f),
+    ),
+  }))
+})
+
 watch(
   () => tasksStore.tasks,
   (newTasks) => {
-    draggableTasks.value = [...newTasks]
+    formatTasksToColumns(newTasks)
   },
   { immediate: true },
 )
@@ -83,23 +113,43 @@ async function fetchTasks() {
   await tasksStore.fetchTasks(projectId)
 }
 
-async function onDragEnd() {
+async function onDragEnd(event: any) {
   dragging.value = false
 
+  const fromStatus = event.from.dataset.status as KanbanColumn['status']
+  const toStatus = event.to.dataset.status as KanbanColumn['status']
+
+  const newIndex = event.newIndex
+
+  const targetColumn = columns.value.find((c) => c.status === toStatus)
+
+  if (!targetColumn) {
+    console.error('Target column not found after drag end.')
+    return
+  }
+
+  const taskToUpdate = targetColumn.tasks[newIndex]
+
+  if (!taskToUpdate) {
+    console.error('Task object not found in the new list.')
+    return
+  }
+
+  const taskId = taskToUpdate.id
+
+  if (fromStatus !== toStatus) {
+    console.log(`Task ${taskId} moved from ${fromStatus} to ${toStatus}. Updating status...`)
+    await tasksStore.updateTask(taskId, { status: toStatus })
+  }
+
+  const newOrder = targetColumn.tasks.map((task, index) => ({
+    id: task.id,
+    orderIndex: index,
+  }))
+
   console.log(
-    'Tasks reordered locally:',
-    draggableTasks.value.map((t) => t.id),
-  )
-}
-
-function isTaskVisible(task: Task): boolean {
-  const f = filter.value.toLowerCase()
-  if (!f) return true
-
-  return (
-    (task.title || '').toLowerCase().includes(f) ||
-    (task.assignee || '').toLowerCase().includes(f) ||
-    (task.status || '').toLowerCase().includes(f)
+    `Order changed in ${toStatus}. New order:`,
+    newOrder.map((o) => o.id),
   )
 }
 
@@ -118,15 +168,16 @@ onMounted(fetchTasks)
 .tasks-page {
   padding: 1rem;
   h1 {
-    margin-bottom: 1rem;
+    display: flex;
+    width: 100%;
+    justify-content: center;
   }
 
   .actions {
     display: flex;
-    width: 100%;
     justify-content: space-between;
-    margin-bottom: 1.5rem;
     align-items: center;
+    margin-bottom: 1.5rem;
     padding: 10px 0;
   }
 
@@ -146,7 +197,6 @@ onMounted(fetchTasks)
       outline: none;
     }
   }
-
   button {
     padding: 10px 20px;
     border: none;
@@ -159,84 +209,65 @@ onMounted(fetchTasks)
       box-shadow 0.3s;
     white-space: nowrap;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    &:active {
-      transform: translateY(0);
-      box-shadow: none;
-    }
-
-    &:nth-last-child(1) {
-      background-color: #007bff;
-      color: white;
-
-      &:hover {
-        background-color: #0056b3;
-      }
-    }
-
-    &:nth-child(1) {
-      background-color: #e9ecef;
-      color: #343a40;
-      border: 1px solid #dee2e6;
-
-      &:hover {
-        background-color: #d8dade;
-      }
-    }
   }
 
-  .tasks-table {
-    width: 100%;
-    border-collapse: collapse;
-    th,
-    td {
-      text-align: center;
-      padding: 0.75rem 0.5rem;
-      border-bottom: 1px solid #eee;
-      vertical-align: middle;
-    }
-    thead th:hover {
-      background: #f7f7f7;
-      cursor: pointer;
-    }
-    tbody tr {
-      cursor: pointer;
-      &.dragging {
-        opacity: 0.5;
-      }
-      &:hover {
-        background: #f7f7f7;
-      }
-    }
-
-    .status {
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      &.todo {
-        background-color: #ffe0b2;
-        color: #ff9800;
-      }
-      &.in-progress {
-        background-color: #bbdefb;
-        color: #2196f3;
-      }
-      &.done {
-        background-color: #c8e6c9;
-        color: #4caf50;
-      }
-    }
-  }
-  .actions {
+  .kanban-board-container {
     display: flex;
     width: 100%;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    gap: 40px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    min-height: 500px;
+  }
+
+  .kanban-column {
+    width: 100%;
+    background-color: #f4f5f7;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+  }
+
+  .column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #333;
+    }
+    .task-count {
+      background: #e0e0e0;
+      color: #777;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+  }
+
+  .kanban-tasks-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 50px;
+    padding-right: 5px;
+  }
+
+  .ghost-card {
+    opacity: 0.5;
+    background: #e9e9e9;
+    border: 1px dashed #007bff;
+    box-shadow: none;
+    .task-title,
+    .task-details {
+      visibility: hidden;
+    }
   }
 }
 </style>
