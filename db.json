@@ -30,7 +30,7 @@
       "createdAt": "2025-10-12T02:17:58.614Z"
     },
     {
-      "id": 5,
+      "id": "5",
       "title": "Another example project",
       "description": "",
       "taskCount": 0,
@@ -79,6 +79,15 @@
       "assignee": "Bob",
       "status": "todo",
       "dueDate": "2025-10-19T02:38:33.228Z"
+    },
+    {
+      "id": "587e",
+      "projectId": 4,
+      "title": "Some task",
+      "description": "Some description",
+      "assignee": "Bob",
+      "status": "todo",
+      "dueDate": "2025-10-19T05:33:57.079Z"
     }
   ]
 }

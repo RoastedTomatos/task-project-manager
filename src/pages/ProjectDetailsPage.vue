@@ -69,6 +69,7 @@ import type { Task } from '@/types/Task'
 import type { Project } from '@/types/Project'
 import TaskCard from '@/components/TaskCard.vue'
 import AddTaskModal from '@/components/TasksModal.vue'
+import { toast, type ToastOptions } from 'vue3-toastify'
 
 const tasksStore = useTasksStore()
 const projectsStore = useProjectsStore()
@@ -156,6 +157,8 @@ async function fetchTasks() {
   await tasksStore.fetchTasks(projectId)
 }
 
+// Lib doesn`t provide types here, so it's better to use 'any'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function onDragEnd(event: any) {
   dragging.value = false
 
@@ -181,8 +184,12 @@ async function onDragEnd(event: any) {
   const taskId = taskToUpdate.id
 
   if (fromStatus !== toStatus) {
-    console.log(`Task ${taskId} moved from ${fromStatus} to ${toStatus}. Updating status...`)
     await tasksStore.updateTask(taskId, { status: toStatus })
+
+    toast(`Task "${taskToUpdate.title}" moved to ${statusLabels[toStatus]}`, {
+      autoClose: 1000,
+      position: toast.POSITION.BOTTOM_RIGHT,
+    } as ToastOptions)
   }
 
   const newOrder = targetColumn.tasks.map((task, index) => ({
@@ -203,6 +210,10 @@ function openAddTaskModal() {
 function handleTaskCreated() {
   isAddTaskModalOpen.value = false
   fetchTasks()
+  toast('New task created successfully!', {
+    autoClose: 1000,
+    position: toast.POSITION.BOTTOM_RIGHT,
+  } as ToastOptions)
 }
 
 function goBack() {
@@ -276,7 +287,6 @@ onMounted(() => {
 
     input {
       width: fit-content;
-      height: -webkit-fill-available;
       padding: 10px 15px;
       border: 1px solid #ddd;
       border-radius: 8px;
